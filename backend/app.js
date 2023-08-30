@@ -4,11 +4,12 @@ const bodyParser = require('body-parser');
 const mongoose = require('mongoose');
 
 const postRoutes = require('./routes/posts');
+const userRoutes = require('./routes/user');
 const app = express()
 
 // Check credentials folder to login to MongoDB from terminal
 mongoose
-  .connect(process.env.DB_URL)
+  .connect(process.env.DB_URL)  //?retryWrites=true&w=majority
   .then(() => {
     console.log("Connected to database!");
   })
@@ -22,12 +23,13 @@ app.use('/images', express.static(path.join('backend/images'))); //turn the imag
 //CORS Header Data for Security
 app.use((req, res, next) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
+  res.setHeader('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PATCH, PUT, DELETE, OPTIONS');
   next();
 });
 
 // forward routing to postRoutes above
 app.use('/api/posts', postRoutes);
+app.use('/api/user', userRoutes);
 
 module.exports = app;

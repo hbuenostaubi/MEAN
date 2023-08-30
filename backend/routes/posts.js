@@ -3,6 +3,7 @@ const Post = require("../models/post");  //mongoose models
 //npm i --save multer for image uploads (extract incoming files)
 const multer = require('multer');
 const router = express.Router();
+const checkAuth = require('../middleware/check-auth');
 
 const MIME_TYPE_MAP = {
   'image/png': 'png',
@@ -26,37 +27,38 @@ const storage = multer.diskStorage({
 
 // LocalHost 3000 / posts
 //multer will extract an image in the post
-router.post('', multer({storage: storage}).single('image'), (req, res, next) => {
-  const url = req.protocol + '://' + req.get('host');  //provided by multer to get url from images folder in the backend
-  const post = new Post({
-    title: req.body.title,
-    content: req.body.content,
-    imagePath: url + '/images/' + req.file.filename
-  });
-  // saves new entry w/ that data and automatically generated id
-  post.save().then(result => {
-    res.status(201).json({
-      success: true, post: {
-        // or you can use spread operator ...result and overwrite all the results
-        id: result._id,
-        title: result.title,
-        content: result.content,
-        imagePath: result.imagePath
-      }, message: "Post added successfully"
+router.post('', checkAuth,
+  multer({storage: storage}).single('image'), (req, res, next) => {
+    const url = req.protocol + '://' + req.get('host');  //provided by multer to get url from images folder in the backend
+    const post = new Post({
+      title: req.body.title,
+      content: req.body.content,
+      imagePath: url + '/images/' + req.file.filename
+    });
+    // saves new entry w/ that data and automatically generated id
+    post.save().then(result => {
+      res.status(201).json({
+        success: true, post: {
+          // or you can use spread operator ...result and overwrite all the results
+          id: result._id,
+          title: result.title,
+          content: result.content,
+          imagePath: result.imagePath
+        }, message: "Post added successfully"
+      });
     });
   });
-});
 
 //mongodb stores ids with and underscore
-router.put("/:id", multer({storage: storage}).single('image'),
+router.put("/:id", checkAuth, multer({storage: storage}).single('image'),
   (req, res, next) => {
-  let imagePath = req.body.imagePath;
-  if(req.file){
-    const url = req.protocol + '://' + req.get('host');  //provided by multer to get url from images folder in the backend
-    imagePath = url + '/images/' + req.file.filename;
-  }
+    let imagePath = req.body.imagePath;
+    if (req.file) {
+      const url = req.protocol + '://' + req.get('host');  //provided by multer to get url from images folder in the backend
+      imagePath = url + '/images/' + req.file.filename;
+    }
 
-  const post = new Post({
+    const post = new Post({
       _id: req.body.id, title: req.body.title, content: req.body.content, imagePath: imagePath
     });
     Post.updateOne({_id: req.params.id}, post).then(result => {
@@ -83,7 +85,7 @@ router.get('/:id', (req, res, next) => {
   });
 });
 
-router.delete('/:id', (req, res, next) => {
+router.delete('/:id', checkAuth, (req, res, next) => {
   Post.deleteOne({_id: req.params.id}).then(result => {
     res.status(200).json({message: "Post deleted!", success: true});
   });

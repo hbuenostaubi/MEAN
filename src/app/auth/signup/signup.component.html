@@ -1,0 +1,24 @@
+<mat-card>
+  <mat-spinner *ngIf="isLoading"></mat-spinner>
+  <!--  the function to submit is added in form-->
+  <!--  #postForm is a local reference (reference variable) to add directly to ts data using a directive to not expose information-->
+  <form (submit)="onSignup(signupForm)" #signupForm="ngForm" *ngIf="!isLoading">
+
+    <mat-form-field>
+      <!-- email html content validated email format and ngModel is part of forms-->
+      <input matInput type="email" placeholder="E-Mail" #emailInput="ngModel" name="email" ngModel required email>
+      <mat-error *ngIf="emailInput.invalid">Please enter valid email.</mat-error>
+    </mat-form-field>
+
+    <mat-form-field>
+      <input matInput type="password" ngModel #passwordInput="ngModel" name="password" placeholder="Password" required>
+      <mat-error *ngIf="passwordInput.invalid">Please enter valid password.</mat-error>
+    </mat-form-field>
+
+    <!--    type=submit is necessary b/c it is form data-->
+    <button mat-raised-button color="accent" type="submit" *ngIf="!isLoading">Signup</button>
+    <mat-spinner *ngIf="isLoading"></mat-spinner>
+  </form>
+</mat-card>
+
+
