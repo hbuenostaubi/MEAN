@@ -15,13 +15,15 @@ const storage = multer.diskStorage({
   destination: (req, file, callback) => {
     const isValid = MIME_TYPE_MAP[file.mimeType];
     let error = new Error('Invalid mime type');
+    if (isValid) {
+      error = null;
+    }
     callback(null, "backend/images")  //relative to server.js folder
   },
   filename: (req, file, callback) => {
     const name = file.originalname.toLowerCase().split(' ').join('-');
     const ext = MIME_TYPE_MAP[file.mimeType];
     callback(null, name + '-' + Date.now() + '.' + ext);
-
   }
 });
 
@@ -33,18 +35,21 @@ router.post('', checkAuth,
     const post = new Post({
       title: req.body.title,
       content: req.body.content,
-      imagePath: url + '/images/' + req.file.filename
+      imagePath: url + '/images/' + req.file.filename,
+      creator: req.userData.userId
     });
     // saves new entry w/ that data and automatically generated id
     post.save().then(result => {
       res.status(201).json({
-        success: true, post: {
-          // or you can use spread operator ...result and overwrite all the results
+        success: true,
+        message: "Post added successfully",
+        // or you can use spread operator ...result and overwrite all the results (...result, except for id that is not part of it)
+        post: {
           id: result._id,
           title: result.title,
           content: result.content,
           imagePath: result.imagePath
-        }, message: "Post added successfully"
+        }
       });
     });
   });
@@ -57,12 +62,20 @@ router.put("/:id", checkAuth, multer({storage: storage}).single('image'),
       const url = req.protocol + '://' + req.get('host');  //provided by multer to get url from images folder in the backend
       imagePath = url + '/images/' + req.file.filename;
     }
-
     const post = new Post({
-      _id: req.body.id, title: req.body.title, content: req.body.content, imagePath: imagePath
+      _id: req.body.id,
+      title: req.body.title,
+      content: req.body.content,
+      imagePath: imagePath,
+      creator: req.userData.userId
     });
-    Post.updateOne({_id: req.params.id}, post).then(result => {
-      res.status(200).json({message: "update success", success: true});
+    //authorization resources
+    Post.updateOne({_id: req.params.id, creator: req.userData.userId}, post).then(result => {
+      if (result.modifiedCount > 0) {
+        res.status(200).json({message: "update success", success: true});
+      } else {
+        res.status(401).json({message: 'not authorized', success: false});
+      }
     });
   });
 
@@ -86,8 +99,13 @@ router.get('/:id', (req, res, next) => {
 });
 
 router.delete('/:id', checkAuth, (req, res, next) => {
-  Post.deleteOne({_id: req.params.id}).then(result => {
-    res.status(200).json({message: "Post deleted!", success: true});
+  Post.deleteOne({_id: req.params.id, creator: req.userData.userId}).then(result => {
+    console.log('result: ', result);
+    if (result.deletedCount> 0) {
+      res.status(200).json({message: "post deleted", success: true});
+    } else {
+      res.status(401).json({message: 'not authorized', success: false});
+    }
   });
 });
 

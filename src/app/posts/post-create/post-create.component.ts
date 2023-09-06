@@ -28,7 +28,7 @@ export class PostCreateComponent implements OnInit {
     this.form = new FormGroup<any>({
       title: new FormControl(null, {validators: [Validators.required, Validators.minLength(3)]}),
       content: new FormControl(null, {validators: [Validators.required]}),
-      image: new FormControl(null, {validators: [Validators.required], asyncValidators:[mimeType]})  // takes mimeTypeValidator observer
+      image: new FormControl(null, {validators:[Validators.required], asyncValidators:[mimeType]})  // takes mimeTypeValidator observer
     });
 
     this.route.paramMap.subscribe((paramMap: ParamMap) => {
@@ -39,7 +39,7 @@ export class PostCreateComponent implements OnInit {
         this.postService.getPost(this.postId).subscribe(postData => {
           this.isLoading = false;
           this.post = {
-            id: postData._id, title: postData.title, content: postData.content, imagePath: postData.imagePath
+            id: postData._id, title: postData.title, content: postData.content, imagePath: postData.imagePath, creator: postData.creator
           };
           this.form.setValue({
             title: this.post.title, content: this.post.content, image: this.post.imagePath
@@ -56,19 +56,6 @@ export class PostCreateComponent implements OnInit {
   constructor(public postService: PostService, public route: ActivatedRoute) {  //active
   }
 
-  onSavePost() {
-    if (this.form.invalid) {
-      return;
-    }
-    this.isLoading = true;
-    if (this.mode === 'create') {
-      this.postService.addPost(this.form.value.title, this.form.value.content, this.form.value.image);
-    } else {
-      this.postService.updatePost(this.postId, this.form.value.title, this.form.value.content, this.form.value.image);
-    }
-    this.form.reset();  //to reset the data after it has been processed
-  }
-
   // Event is a default javascript type
   onImagePick(event: Event) {
     const file = (event.target as HTMLInputElement).files[0];
@@ -80,5 +67,19 @@ export class PostCreateComponent implements OnInit {
       this.imagePreview = reader.result;  // got an error b/c it wanted a string can also use reader.result as string
     };
     reader.readAsDataURL(file) //input is a blob file when file is done loading
+  }
+
+  onSavePost() {
+    console.log('save post')
+    if (this.form.invalid) {
+      return;
+    }
+    this.isLoading = true;
+    if (this.mode === 'create') {
+      this.postService.addPost(this.form.value.title, this.form.value.content, this.form.value.image);
+    } else {
+      this.postService.updatePost(this.postId, this.form.value.title, this.form.value.content, this.form.value.image);
+    }
+    this.form.reset();  //to reset the data after it has been processed
   }
 }

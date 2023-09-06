@@ -24,12 +24,14 @@ export class PostService {
               title: post.title,
               content: post.content,
               id: post._id,
-              imagePath: post.imagePath
+              imagePath: post.imagePath,
+              creator: post.creator
             };
           });
         })
       )
       .subscribe(transformedPosts => {
+
         this.posts = transformedPosts;
         this.postsUpdated.next([...this.posts]);
       });
@@ -41,7 +43,13 @@ export class PostService {
 
   getPost(id: string) {
     //spread operator pulls all the properties of an object '...' and adds them to a new object
-    return this.http.get<{ _id: string, title: string, content: string, imagePath: string }>("http://localhost:3000/api/posts/" + id);
+    return this.http.get<{
+      _id: string;
+      title: string;
+      content: string;
+      imagePath: string;
+      creator: string;
+    }>("http://localhost:3000/api/posts/" + id);
   }
 
   addPost(title: string, content: string, image: File) {
@@ -56,7 +64,8 @@ export class PostService {
           id: responseData.post.id,
           title: title,
           content: content,
-          imagePath: responseData.post.imagePath
+          imagePath: responseData.post.imagePath,
+          creator: null
         }
         const id = responseData.post.id;
         post.id = id;
@@ -81,7 +90,13 @@ export class PostService {
     this.http.put("http://localhost:3000/api/posts/" + id, postData).subscribe(response => {
       const updatedPosts = [...this.posts];
       const oldPostIndex = updatedPosts.findIndex(p => p.id === id);
-      const post: Post = {id: id, title: title, content: content, imagePath: 'response.imagePath'};
+      const post: Post = {
+        id: id,
+        title: title,
+        content: content,
+        imagePath: 'response.imagePath',
+        creator: postData.creator
+      };
       updatedPosts[oldPostIndex] = post;
       this.posts = updatedPosts;
       this.postsUpdated.next([...this.posts]);

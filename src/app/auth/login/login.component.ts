@@ -10,13 +10,14 @@ import {AuthService} from "../auth.service";
 })
 
 export class LoginComponent {
-  isLoading:Boolean = false;
+  isLoading: Boolean = false;
 
   constructor(public authService: AuthService) {
 
   }
-  onLogin(form: NgForm){
-    if(form.invalid){
+
+  onLogin(form: NgForm) {
+    if (form.invalid) {
       return;
     }
     this.isLoading = true;
