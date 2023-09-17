@@ -19,7 +19,7 @@ mongoose
 
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({extended: false}));
-app.use('/images', express.static(path.join('backend/images'))); //turn the image folder static to easily access for requests
+app.use('/images', express.static(path.join('images'))); //turn the image folder static to easily access for requests   backend/images
 //CORS Header Data for Security
 app.use((req, res, next) => {
   res.setHeader('Access-Control-Allow-Origin', '*');

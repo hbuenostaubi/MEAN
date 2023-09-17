@@ -1,10 +1,12 @@
-import {Component, OnInit} from '@angular/core'
+import {Component, OnDestroy, OnInit} from '@angular/core'
 // import {EventEmitter, Output} from '@angular/core'
 import {Post} from '../post.model'
 import {FormControl, FormGroup, NgForm, Validators} from "@angular/forms";
 import {PostService} from "../post.service";
 import {ActivatedRoute, ParamMap} from "@angular/router";
 import {mimeType} from "./mime-type.validator";
+import {Subscription} from "rxjs";
+import {AuthService} from "../../auth/auth.service";
 
 
 @Component({
@@ -12,7 +14,7 @@ import {mimeType} from "./mime-type.validator";
   templateUrl: './post-create.component.html',
   styleUrls: ['./post-create.component.less']
 })
-export class PostCreateComponent implements OnInit {
+export class PostCreateComponent implements OnInit, OnDestroy {
   enteredTitle: String = ''
   enteredContent: String = '';
   public post: Post;
@@ -20,15 +22,21 @@ export class PostCreateComponent implements OnInit {
   form: FormGroup;
   private mode = 'create';
   private postId: string;
+  private authStatusSub: Subscription;
   imagePreview: string | ArrayBuffer;
 
 
   // @Output() postCreated = new EventEmitter<Post>();  //Can define event emitter with data it passes else any
   ngOnInit(): void {
+    this.authStatusSub = this.authService.getAuthStatusListener().subscribe(
+      authStatus => {
+        this.isLoading = false;
+      }
+    );
     this.form = new FormGroup<any>({
       title: new FormControl(null, {validators: [Validators.required, Validators.minLength(3)]}),
       content: new FormControl(null, {validators: [Validators.required]}),
-      image: new FormControl(null, {validators:[Validators.required], asyncValidators:[mimeType]})  // takes mimeTypeValidator observer
+      image: new FormControl(null, {validators: [Validators.required], asyncValidators: [mimeType]})  // takes mimeTypeValidator observer
     });
 
     this.route.paramMap.subscribe((paramMap: ParamMap) => {
@@ -39,7 +47,11 @@ export class PostCreateComponent implements OnInit {
         this.postService.getPost(this.postId).subscribe(postData => {
           this.isLoading = false;
           this.post = {
-            id: postData._id, title: postData.title, content: postData.content, imagePath: postData.imagePath, creator: postData.creator
+            id: postData._id,
+            title: postData.title,
+            content: postData.content,
+            imagePath: postData.imagePath,
+            creator: postData.creator
           };
           this.form.setValue({
             title: this.post.title, content: this.post.content, image: this.post.imagePath
@@ -53,7 +65,7 @@ export class PostCreateComponent implements OnInit {
     }); // when we get the data from the route url and can listen/update UI
   }
 
-  constructor(public postService: PostService, public route: ActivatedRoute) {  //active
+  constructor(public postService: PostService, public route: ActivatedRoute, private authService: AuthService) {  //active
   }
 
   // Event is a default javascript type
@@ -82,4 +94,10 @@ export class PostCreateComponent implements OnInit {
     }
     this.form.reset();  //to reset the data after it has been processed
   }
+
+  ngOnDestroy() {
+    this.authStatusSub.unsubscribe();
+  }
 }
+
+

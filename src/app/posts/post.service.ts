@@ -4,6 +4,9 @@ import {Injectable} from "@angular/core";
 import {HttpClient} from "@angular/common/http";
 import {map} from 'rxjs/operators'
 import {Router} from "@angular/router";
+import {environment} from "../../environments/environment";
+
+const BACKEND_URL = environment.apiUrl+'/posts/';
 
 @Injectable({providedIn: 'root'})   //provides it in the root level and will only create one instance of the service through the app
 export class PostService {
@@ -16,7 +19,7 @@ export class PostService {
   getPosts() {
     // return [...this.posts];  //creating a true copy of the post (spread operator) / creates new array w/ the old objects
     this.http
-      .get<{ message: string; posts: any }>("http://localhost:3000/api/posts")
+      .get<{ message: string; posts: any }>(BACKEND_URL)
       .pipe(
         map(postData => {
           return postData.posts.map(post => {
@@ -49,7 +52,7 @@ export class PostService {
       content: string;
       imagePath: string;
       creator: string;
-    }>("http://localhost:3000/api/posts/" + id);
+    }>(BACKEND_URL + id);
   }
 
   addPost(title: string, content: string, image: File) {
@@ -58,7 +61,7 @@ export class PostService {
     postData.append('content', content);
     postData.append('image', image, title);
     this.http  //expected results below from api
-      .post<{ message: string, post: Post }>("http://localhost:3000/api/posts", postData)
+      .post<{ message: string, post: Post }>(BACKEND_URL, postData)
       .subscribe(responseData => {
         const post: Post = {
           id: responseData.post.id,
@@ -87,7 +90,7 @@ export class PostService {
       postData = {id: id, title: title, content: content, imagePath: image};
     }
 
-    this.http.put("http://localhost:3000/api/posts/" + id, postData).subscribe(response => {
+    this.http.put(BACKEND_URL + id, postData).subscribe(response => {
       const updatedPosts = [...this.posts];
       const oldPostIndex = updatedPosts.findIndex(p => p.id === id);
       const post: Post = {
@@ -105,7 +108,7 @@ export class PostService {
   }
 
   deletePost(postId: string) {
-    this.http.delete("http://localhost:3000/api/posts/" + postId)
+    this.http.delete(BACKEND_URL + postId)
       .subscribe(() => {
         const updatedPosts = this.posts.filter(post => post.id !== postId);
         this.posts = updatedPosts;
